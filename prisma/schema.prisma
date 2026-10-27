@@ -14,18 +14,39 @@ enum Rol {
   admin
 }
 
+enum EstadoReserva {
+  pendiente
+  confirmada
+  cancelada
+}
+
 model Usuario {
-  id       Int    @id @default(autoincrement())
-  nombre    String
-  email     String @unique
-  password  String
-  rol       Rol    @default(cliente)
+  id       Int        @id @default(autoincrement())
+  nombre   String
+  email    String     @unique
+  password String
+  rol      Rol        @default(cliente)
+  reservas Reserva[]
 }
 
 model Servicio {
-  id          Int     @id @default(autoincrement())
+  id          Int        @id @default(autoincrement())
   nombre      String
-  descripcion  String
+  descripcion String
   duracion    Int
   precio      Float
+  reservas    Reserva[]
+}
+
+model Reserva {
+  id         Int            @id @default(autoincrement())
+  usuarioId  Int
+  servicioId Int
+  fecha      DateTime
+  estado     EstadoReserva @default(pendiente)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  servicio Servicio @relation(fields: [servicioId], references: [id], onDelete: Cascade)
 }

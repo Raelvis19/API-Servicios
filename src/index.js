@@ -3,6 +3,7 @@ import express from "express";
 
 import servicioRoutes from "./routes/servicio.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import reservaRoutes from "./routes/reserva.routes.js";
 import { loggerMiddleware } from "./middlewares/logger.middleware.js";
 
 const app = express();
@@ -22,6 +23,7 @@ app.get("/", (req, res) => {
 // Rutas de la API
 app.use("/auth", authRoutes);
 app.use("/servicios", servicioRoutes);
+app.use("/reservas", reservaRoutes);
 
 // Manejo de errores centralizado
 app.use((err, req, res, next) => {
