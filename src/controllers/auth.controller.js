@@ -39,3 +39,33 @@ export const login = async (req, res, next) => {
     res.json({ token })
   } catch (err) { next(err) }
 }
+
+export const actualizarPerfil = async (req, res, next) => {
+  try {
+    const usuarioId = req.usuario.id
+    const { nombre } = req.body
+
+    if (!nombre || !nombre.trim()) {
+      return res.status(400).json({ error: "El nombre es obligatorio" })
+    }
+
+    const usuario = await prisma.usuario.update({
+      where: { id: usuarioId },
+      data: { nombre: nombre.trim() },
+      select: {
+        id: true,
+        nombre: true,
+        email: true,
+        rol: true
+      }
+    })
+
+    return res.status(200).json(usuario)
+  } catch (error) {
+    if (error.code === "P2025") {
+      return res.status(404).json({ error: "Usuario no encontrado" })
+    }
+    console.error("Error al actualizar perfil:", error)
+    return res.status(500).json({ error: "Error al actualizar el perfil" })
+  }
+}

@@ -8,31 +8,64 @@ export const createReserva = async (req, res) => {
 
     if (!servicioId || !fecha) {
       return res.status(400).json({
-        mensaje: "servicioId y fecha son obligatorios"
+        error: "servicioId y fecha son obligatorios"
       });
     }
 
     const servicioIdNum = Number(servicioId);
     if (!Number.isInteger(servicioIdNum) || servicioIdNum <= 0) {
       return res.status(400).json({
-        mensaje: "servicioId no es válido"
+        error: "servicioId no es válido"
       });
     }
 
     const fechaDate = new Date(fecha);
     if (isNaN(fechaDate.getTime())) {
       return res.status(400).json({
-        mensaje: "fecha no es válida"
+        error: "fecha no es válida"
       });
     }
 
-    // Verificar que el servicio existe
+    // Validación 1: La fecha debe ser futura
+    if (fechaDate <= new Date()) {
+      return res.status(400).json({
+        error: "La fecha debe ser futura"
+      });
+    }
+
+    // Validación 2: El servicio debe existir
     const servicio = await prisma.servicio.findUnique({
       where: { id: servicioIdNum }
     });
     if (!servicio) {
       return res.status(404).json({
-        mensaje: "El servicio no existe"
+        error: "El servicio no existe o no está activo"
+      });
+    }
+
+    // Validación 3: El usuario no puede tener otra reserva activa para el mismo servicio en la misma fecha
+    const fechaInicioDia = new Date(fechaDate);
+    fechaInicioDia.setHours(0, 0, 0, 0);
+    const fechaFinDia = new Date(fechaDate);
+    fechaFinDia.setHours(23, 59, 59, 999);
+
+    const reservaActivaExistente = await prisma.reserva.findFirst({
+      where: {
+        usuarioId,
+        servicioId: servicioIdNum,
+        fecha: {
+          gte: fechaInicioDia,
+          lte: fechaFinDia
+        },
+        estado: {
+          in: ["pendiente", "confirmada"]
+        }
+      }
+    });
+
+    if (reservaActivaExistente) {
+      return res.status(409).json({
+        error: "Ya tienes una reserva activa para este servicio en la misma fecha"
       });
     }
 
